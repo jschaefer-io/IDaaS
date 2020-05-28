@@ -10,8 +10,13 @@ func main() {
 	// https://github.com/dgrijalva/jwt-go
 	// https://golang.org/pkg/net/smtp/
 
+
+
 	r := gin.Default()
-	r.GET("/", action.GetIdentity)
-	r.POST("/", action.AddIdentity)
+	r.GET("/", action.IdentityIndex)
+	r.POST("/", action.IdentityCreate)
+	r.GET("/:id", action.IdentityShow)
+	r.PUT("/:id", action.IdentityUpdate)
+	r.DELETE("/:id", action.IdentityDelete)
 	r.Run()
 }
