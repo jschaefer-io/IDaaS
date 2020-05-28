@@ -9,9 +9,9 @@ import (
 // based on
 type Identity struct {
 	Model
-	Email    string
-	Password crypto.Password
-	Token    crypto.Token
+	Email    string          `json:"email"`
+	Password crypto.Password `json:"password"`
+	Token    crypto.Token    `json:"-"`
 }
 
 // Creates and prepares the new Identity Instance
