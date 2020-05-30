@@ -1,4 +1,4 @@
-package resource
+package action
 
 import (
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,16 @@ type AddIdentityForm struct {
 }
 
 type Identity struct {
-	BaseResource
+	BaseActionSet
+}
+
+func (i Identity) requireIdentity(id int, c *gin.Context) (model.Identity, error) {
+	identity := model.Identity{}
+	if err := db.Get().Find(&identity, id).Error; err != nil {
+		reponse.NewError(http.StatusUnprocessableEntity, err).Apply(c)
+		return identity, err
+	}
+	return identity, nil
 }
 
 func (i Identity) Index(c *gin.Context) {
@@ -42,13 +51,19 @@ func (i Identity) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, id)
 }
 
-func (i Identity) Show(c *gin.Context, m interface{}) {
-	identity := m.(model.Identity)
+func (i Identity) Show(c *gin.Context, id int) {
+	identity, err := i.requireIdentity(id, c)
+	if err != nil {
+		return
+	}
 	reponse.NewResponse(http.StatusOK, identity).Apply(c)
 }
 
-func (i Identity) Update(c *gin.Context, m interface{}) {
-	identity := m.(model.Identity)
+func (i Identity) Update(c *gin.Context, id int) {
+	identity, err := i.requireIdentity(id, c)
+	if err != nil {
+		return
+	}
 
 	var json UpdatePasswordForm
 	if err := c.ShouldBindJSON(&json); err != nil {
@@ -61,8 +76,11 @@ func (i Identity) Update(c *gin.Context, m interface{}) {
 	reponse.NewResponse(http.StatusOK, identity).Apply(c)
 }
 
-func (i Identity) Delete(c *gin.Context, m interface{}) {
-	identity := m.(model.Identity)
+func (i Identity) Delete(c *gin.Context, id int) {
+	identity, err := i.requireIdentity(id, c)
+	if err != nil {
+		return
+	}
 	db.Get().Delete(&identity)
 	reponse.NewResponse(http.StatusOK, identity).Apply(c)
 }
