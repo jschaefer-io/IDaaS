@@ -11,3 +11,9 @@ type Model struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+
+// Basic Password Form
+type PasswordForm struct {
+	Password string `json:"password" binding:"required"`
+}

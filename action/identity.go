@@ -9,38 +9,23 @@ import (
 	"net/http"
 )
 
-type UpdatePasswordForm struct {
-	Password string `json:"password"`
-}
-
-type AddIdentityForm struct {
-	UpdatePasswordForm
-	Email string `json:"email" binding:"required,email"`
-}
-
+// Identity Action Set
 type Identity struct {
 	BaseActionSet
 }
 
-func (i Identity) requireIdentity(id int, c *gin.Context) (model.Identity, error) {
-	identity := model.Identity{}
-	if err := db.Get().Find(&identity, id).Error; err != nil {
-		reponse.NewError(http.StatusUnprocessableEntity, err).Apply(c)
-		return identity, err
-	}
-	return identity, nil
-}
-
+// Main index route
 func (i Identity) Index(c *gin.Context) {
 	var ids []model.Identity
 	db.Get().Find(&ids)
 	c.JSON(http.StatusOK, ids)
 }
 
+// Main creat route
 func (i Identity) Create(c *gin.Context) {
-	var json AddIdentityForm
+	var json model.Identity
 	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		model.ValidationError(err).Apply(c)
 		return
 	}
 
@@ -51,36 +36,44 @@ func (i Identity) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, id)
 }
 
+// Main show single route
 func (i Identity) Show(c *gin.Context, id int) {
-	identity, err := i.requireIdentity(id, c)
+	identity, err := model.Identity{}.Find(id)
 	if err != nil {
+		reponse.NewError(http.StatusUnprocessableEntity, err).Apply(c)
 		return
 	}
 	reponse.NewResponse(http.StatusOK, identity).Apply(c)
 }
 
+// Main update route
 func (i Identity) Update(c *gin.Context, id int) {
-	identity, err := i.requireIdentity(id, c)
+	identity, err := model.Identity{}.Find(id)
 	if err != nil {
+		reponse.NewError(http.StatusUnprocessableEntity, err).Apply(c)
 		return
 	}
 
-	var json UpdatePasswordForm
+	var json model.PasswordForm
 	if err := c.ShouldBindJSON(&json); err != nil {
-		reponse.NewError(http.StatusUnprocessableEntity, err.Error())
+		model.ValidationError(err).Apply(c)
 		return
 	}
 
-	identity.Password = crypto.NewPassword(json.Password)
+	pwd := crypto.NewPassword(json.Password)
+	identity.Password = pwd.String()
 	db.Get().Save(&identity)
 	reponse.NewResponse(http.StatusOK, identity).Apply(c)
 }
 
+// Main delete route
 func (i Identity) Delete(c *gin.Context, id int) {
-	identity, err := i.requireIdentity(id, c)
+	identity, err := model.Identity{}.Find(id)
 	if err != nil {
+		reponse.NewError(http.StatusUnprocessableEntity, err).Apply(c)
 		return
 	}
+
 	db.Get().Delete(&identity)
 	reponse.NewResponse(http.StatusOK, identity).Apply(c)
 }

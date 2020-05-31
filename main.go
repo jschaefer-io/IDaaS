@@ -14,7 +14,8 @@ func main() {
 	r := gin.Default()
 
 	// Add Resource Routes
-	resource.NewResource("/", new(action.Identity)).Apply(r)
+	resource.NewResource("/test", new(action.BaseActionSet)).Apply(r)
+	resource.NewResource("/identities", new(action.Identity)).Apply(r)
 
 	// Error Routes
 	r.NoRoute(action.Error404)

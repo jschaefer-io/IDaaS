@@ -1,6 +1,8 @@
 package crypto
 
-import "testing"
+import (
+	"testing"
+)
 
 // Tests if a new token is generated
 // and is of proper length
