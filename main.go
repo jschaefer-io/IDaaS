@@ -14,13 +14,13 @@ func main() {
 	// Model Migrations
 	db.Get().AutoMigrate(model.Identity{})
 
-	r := gin.Default()
+	r := gin.New()
 
-	// Middlewares
-	r.Use(middleware.Noop())
+	// Middleware
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
 	// Add Resource Routes
-	resource.NewResource("/test", new(action.BaseActionSet)).Apply(r)
 	resource.NewResource("/identities", new(action.Identity)).Apply(r)
 
 	// Plain Routes
@@ -31,6 +31,9 @@ func main() {
 	r.NoRoute(action.Error404)
 	r.NoMethod(action.Error405)
 
-	// Start webserver
-	r.Run()
+	// Start Webservice
+	err := r.Run()
+	if err != nil {
+		panic(err)
+	}
 }
