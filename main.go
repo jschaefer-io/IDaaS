@@ -9,9 +9,6 @@ import (
 
 func main() {
 
-	// https://github.com/dgrijalva/jwt-go
-	// https://golang.org/pkg/net/smtp/
-
 	r := gin.Default()
 
 	// Middlewares
