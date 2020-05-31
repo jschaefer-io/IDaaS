@@ -12,7 +12,6 @@ type Base struct {
 }
 
 func (r Base) Apply(c *gin.Context) {
-	c.Header("content-type", "application/json")
 	c.JSON(r.code, r.data)
 }
 
