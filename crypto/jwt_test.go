@@ -54,6 +54,8 @@ func TestCheckJWT(t *testing.T) {
 	}
 }
 
+// Tests, that the jwt can be extracted from
+// an http.Request instance correctly
 func TestExtractJWT(t *testing.T) {
 	r, err := http.NewRequest("GET", "localhost", strings.NewReader(""))
 	if err != nil {
