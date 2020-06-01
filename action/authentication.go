@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/context"
 	"github.com/jschaefer-io/IDaaS/crypto"
 	"github.com/jschaefer-io/IDaaS/db"
 	"github.com/jschaefer-io/IDaaS/model"
@@ -10,18 +10,18 @@ import (
 )
 
 // Returns data for the current logged in user
-func AuthMe(c *gin.Context) {
-	identity, _ := c.Get("identity")
-	reponse.NewResponse(http.StatusOK, identity).Apply(c)
+func AuthMe(w http.ResponseWriter, r *http.Request) {
+	identity := context.Get(r, "identity").(model.Identity)
+	reponse.NewResponse(http.StatusOK, identity).Apply(w)
 }
 
 // Handles an identity login
-func AuthLogin(c *gin.Context) {
+func AuthLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Map json data to identity form
 	var json model.Identity
-	if err := c.ShouldBindJSON(&json); err != nil {
-		model.ValidationError(err).Apply(c)
+	if err := model.BindJson(&json, r.Body); err != nil {
+		model.ValidationError(err).Apply(w)
 		return
 	}
 
@@ -30,7 +30,7 @@ func AuthLogin(c *gin.Context) {
 	err := db.Get().Where("email = ?", json.Email).Find(&identity).Error
 	pwd := crypto.Password(identity.Password)
 	if err != nil || !pwd.Compare(json.Password) {
-		reponse.NewError(http.StatusUnauthorized, "Permission denied").Apply(c)
+		reponse.NewError(http.StatusUnauthorized, "Permission denied").Apply(w)
 		return
 	}
 
@@ -42,7 +42,7 @@ func AuthLogin(c *gin.Context) {
 	})
 
 	if err != nil {
-		reponse.NewError(http.StatusInternalServerError, "An error occurred creating the auth token").Apply(c)
+		reponse.NewError(http.StatusInternalServerError, "An error occurred creating the auth token").Apply(w)
 		return
 	}
 
@@ -50,5 +50,5 @@ func AuthLogin(c *gin.Context) {
 		"error":   false,
 		"token":   jwt,
 		"message": "Authentication successful",
-	}).Apply(c)
+	}).Apply(w)
 }

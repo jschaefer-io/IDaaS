@@ -1,7 +1,7 @@
 package resource
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 	"github.com/jschaefer-io/IDaaS/action"
 	"github.com/jschaefer-io/IDaaS/reponse"
 	"net/http"
@@ -20,29 +20,31 @@ func NewResource(route string, set action.Set) Resource {
 }
 
 // Executes the parameter validation on the show delete and update routes
-func (r Resource) execute(c *gin.Context, fun func(*gin.Context, int)) {
-	idString, err := GetParam(c.Param("id"), "\\d+")
+func (r Resource) execute(writer http.ResponseWriter, request *http.Request, fun func(http.ResponseWriter, *http.Request, int)) {
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		reponse.NewError(http.StatusUnprocessableEntity, "given id is not numeric").Apply(c)
+		reponse.NewError(http.StatusUnprocessableEntity, "given id is not numeric").Apply(writer)
 		return
 	}
 
-	id, err := strconv.Atoi(idString)
-	if err != nil {
-		reponse.NewError(http.StatusNotAcceptable, "given id is not a valid int").Apply(c)
-	}
-
 	// Call route handler with the id
-	fun(c, id)
+	fun(writer, request, id)
 }
 
+// Applies the resource routes to the given router
+func (r Resource) Apply(e *mux.Router) {
+	e.HandleFunc(r.route, r.set.Index).Methods("GET")
+	e.HandleFunc(r.route, r.set.Create).Methods("POST")
 
-// Applies the resource routes to the
-// given routing engine
-func (r Resource) Apply(e *gin.Engine) {
-	e.GET(r.route, r.set.Index)
-	e.POST(r.route, r.set.Create)
-	e.GET(r.route+"/:id", func(c *gin.Context) { r.execute(c, r.set.Show) })
-	e.PUT(r.route+"/:id", func(c *gin.Context) { r.execute(c, r.set.Update) })
-	e.DELETE(r.route+"/:id", func(c *gin.Context) { r.execute(c, r.set.Delete) })
+	idSuffix := "/{id:[0-9]+}"
+	handleIdRoutes := func(handler func(http.ResponseWriter, *http.Request, int)) func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, req *http.Request) {
+			r.execute(w, req, handler)
+		}
+	}
+
+	e.HandleFunc(r.route+idSuffix, handleIdRoutes(r.set.Show)).Methods("GET")
+	e.HandleFunc(r.route+idSuffix, handleIdRoutes(r.set.Update)).Methods("PUT", "PATCH")
+	e.HandleFunc(r.route+idSuffix, handleIdRoutes(r.set.Delete)).Methods("DELETE")
 }

@@ -1,16 +1,16 @@
 package action
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // Basic Resource Action Set
 type Set interface {
-	Index(*gin.Context)
-	Create(*gin.Context)
-	Show(*gin.Context, int)
-	Delete(*gin.Context, int)
-	Update(*gin.Context, int)
+	Index(http.ResponseWriter, *http.Request)
+	Create(http.ResponseWriter, *http.Request)
+	Show(http.ResponseWriter, *http.Request, int)
+	Delete(http.ResponseWriter, *http.Request, int)
+	Update(http.ResponseWriter, *http.Request, int)
 }
 
 // Base Action set which can be
@@ -20,31 +20,31 @@ type Set interface {
 type BaseActionSet struct{}
 
 // Default index Route
-// reults in a 404 error
-func (b BaseActionSet) Index(c *gin.Context) {
-	Error404(c)
+// results in a 404 error
+func (b BaseActionSet) Index(w http.ResponseWriter, r *http.Request) {
+	Error404(w, r)
 }
 
 // Default index Route
-// reults in a 404 error
-func (b BaseActionSet) Create(c *gin.Context) {
-	Error404(c)
+// results in a 404 error
+func (b BaseActionSet) Create(w http.ResponseWriter, r *http.Request) {
+	Error404(w, r)
 }
 
 // Default show Route
-// reults in a 404 error
-func (b BaseActionSet) Show(c *gin.Context, id int) {
-	Error404(c)
+// results in a 404 error
+func (b BaseActionSet) Show(w http.ResponseWriter, r *http.Request, id int) {
+	Error404(w, r)
 }
 
 // Default delete Route
-// reults in a 404 error
-func (b BaseActionSet) Delete(c *gin.Context, id int) {
-	Error404(c)
+// results in a 404 error
+func (b BaseActionSet) Delete(w http.ResponseWriter, r *http.Request, id int) {
+	Error404(w, r)
 }
 
 // Default update Route
-// reults in a 404 error
-func (b BaseActionSet) Update(c *gin.Context, id int) {
-	Error404(c)
+// results in a 404 error
+func (b BaseActionSet) Update(w http.ResponseWriter, r *http.Request, id int) {
+	Error404(w, r)
 }

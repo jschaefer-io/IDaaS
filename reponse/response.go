@@ -1,10 +1,13 @@
 package reponse
 
-import "github.com/gin-gonic/gin"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 // Default JSON Response Interface
 type Response interface {
-	Apply(c *gin.Context)
+	Apply(w http.ResponseWriter)
 }
 
 // Base Response Struct
@@ -13,9 +16,13 @@ type Base struct {
 	data interface{}
 }
 
-// Applies the response to the given gin context
-func (r Base) Apply(c *gin.Context) {
-	c.JSON(r.code, r.data)
+// Applies the response to the given http response writer
+func (r Base) Apply(w http.ResponseWriter) {
+	w.WriteHeader(r.code)
+	data, err := json.Marshal(r.data)
+	if err == nil {
+		_, _ = w.Write(data)
+	}
 }
 
 // Creates a new base response object

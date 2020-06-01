@@ -3,7 +3,7 @@ package crypto
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -40,15 +40,15 @@ func CheckJWT(token string, field string, check func(id int) (Token, error)) (*j
 	})
 }
 
-// Extracts the JWT from the gin.Context header
+// Extracts the JWT from the http request header
 // as an Authorization Bearer-Token
-func ExtractJWT(c *gin.Context) (string, error) {
-	token := c.GetHeader("Authorization")
+func ExtractJWT(r *http.Request) (string, error) {
+	token := r.Header.Get("Authorization")
 	split := strings.Split(token, " ")
 
 	// Check if token is present and properly formed
 	if len(split) != 2 || split[0] != "Bearer" {
 		return "", errors.New("invalid bearer token")
 	}
-	return split[1], errors.New("")
+	return split[1], nil
 }

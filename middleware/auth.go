@@ -1,20 +1,20 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/context"
 	"github.com/jschaefer-io/IDaaS/crypto"
 	"github.com/jschaefer-io/IDaaS/model"
 	"github.com/jschaefer-io/IDaaS/reponse"
 	"net/http"
 )
 
-func Auth() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		message := "Permission denied"
-		token, err := crypto.ExtractJWT(c)
+		token, err := crypto.ExtractJWT(r)
 		if err != nil {
-			reponse.NewError(http.StatusUnauthorized, message).Apply(c)
-			c.Abort()
+			reponse.NewError(http.StatusUnauthorized, message).Apply(w)
 			return
 		}
 
@@ -29,16 +29,14 @@ func Auth() gin.HandlerFunc {
 			return identity.Token, nil
 		})
 		if err != nil || !t.Valid {
-			reponse.NewError(http.StatusUnauthorized, message).Apply(c)
-			c.Abort()
+			reponse.NewError(http.StatusUnauthorized, message).Apply(w)
 			return
 		}
 
-		// If the token is valid
-		// set the logged in identity
-		c.Set("identity", identity)
+		// Attach identity to the context
+		context.Set(r, "identity", identity)
 
 		// If Token is valid, pass to next middleware/ the action
-		c.Next()
-	}
+		next.ServeHTTP(w, r)
+	})
 }

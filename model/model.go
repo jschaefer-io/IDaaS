@@ -15,5 +15,5 @@ type Model struct {
 
 // Basic Password Form
 type PasswordForm struct {
-	Password string `json:"password" binding:"required"`
+	Password string `json:"password" validate:"required"`
 }

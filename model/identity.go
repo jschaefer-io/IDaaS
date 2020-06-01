@@ -11,7 +11,7 @@ import (
 type Identity struct {
 	Model
 	PasswordForm
-	Email string       `json:"email" binding:"required,email"`
+	Email string       `json:"email" validate:"required,email"`
 	Token crypto.Token `json:"-"`
 }
 
