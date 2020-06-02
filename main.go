@@ -10,11 +10,6 @@ import (
 	"net/http"
 )
 
-type Test struct {
-	Name  string `validate:"required"`
-	Email string `validate:"required,email"`
-}
-
 func main() {
 
 	// Model Migrations
