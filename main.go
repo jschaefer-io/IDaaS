@@ -27,6 +27,7 @@ func main() {
 
 	// Plain Routes
 	r.HandleFunc("/auth/login", action.AuthLogin).Methods("POST")
+	r.HandleFunc("/auth/renew", action.AuthRenew).Methods("POST")
 	r.Handle("/me", middleware.Auth(http.HandlerFunc(action.AuthMe))).Methods("GET")
 
 	// Error Routes

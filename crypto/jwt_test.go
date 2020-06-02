@@ -14,7 +14,7 @@ func TestNewJWT(t *testing.T) {
 	data := map[string]interface{}{}
 	for i := 0; i < 10000; i++ {
 		secret := NewToken()
-		token, err := NewJWT(secret, data)
+		_, token, err := NewJWT(secret, data)
 		if err != nil {
 			t.Errorf("Error occured for token %s: %s", secret, err.Error())
 		}
@@ -34,11 +34,11 @@ func TestCheckJWT(t *testing.T) {
 		"id": baseId,
 	}
 	for i := 0; i < 10000; i++ {
-		token, err := NewJWT(secret, data)
+		_, token, err := NewJWT(secret, data)
 		if err != nil {
 			t.Errorf("Token creation should not return an error: %s", err)
 		}
-		testedToken, err := CheckJWT(token, "id", func(id int) (token Token, err error) {
+		_, testedToken, err := CheckJWT(token, "id", func(id int) (token Token, err error) {
 			if id != baseId {
 				t.Errorf("Expected id %d but got %d", baseId, id)
 			}

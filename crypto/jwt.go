@@ -10,9 +10,10 @@ import (
 
 // Generates a new jwt with the given secret token
 // mas the secret key
-func NewJWT(secret Token, data map[string]interface{}) (string, error) {
+func NewJWT(secret Token, data map[string]interface{}) (int64, string, error) {
+	exp := time.Now().Add(time.Minute * 10).Unix()
 	claims := jwt.MapClaims{
-		"exp": time.Now().Add(time.Minute * 10).Unix(),
+		"exp": exp,
 	}
 
 	// Merge custom data in the claims map
@@ -21,13 +22,14 @@ func NewJWT(secret Token, data map[string]interface{}) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString([]byte(secret))
+	return exp, tokenString, err
 }
 
 // Checks if the given token is valid
-func CheckJWT(token string, field string, check func(id int) (Token, error)) (*jwt.Token, error) {
+func CheckJWT(token string, field string, check func(id int) (Token, error)) (jwt.MapClaims, *jwt.Token, error) {
 	claims := jwt.MapClaims{}
-	return jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (i interface{}, err error) {
+	t, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (i interface{}, err error) {
 		id, ok := claims[field].(float64)
 		if !ok {
 			return nil, errors.New("required field in claims not set")
@@ -38,6 +40,7 @@ func CheckJWT(token string, field string, check func(id int) (Token, error)) (*j
 		}
 		return []byte(secret), nil
 	})
+	return claims, t, err
 }
 
 // Extracts the JWT from the http request header
@@ -52,3 +55,4 @@ func ExtractJWT(r *http.Request) (string, error) {
 	}
 	return split[1], nil
 }
+

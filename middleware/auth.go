@@ -19,15 +19,8 @@ func Auth(next http.Handler) http.Handler {
 		}
 
 		// Check if the jwt is valid
-		var identity model.Identity
-		t, err := crypto.CheckJWT(token, "user-id", func(id int) (crypto.Token, error) {
-			var err error
-			identity, err = model.Identity{}.Find(id)
-			if err != nil {
-				return "", err
-			}
-			return identity.Token, nil
-		})
+		identity, _, t, err := model.Identity{}.CheckJwt(token)
+
 		if err != nil || !t.Valid {
 			reponse.NewError(http.StatusUnauthorized, message).Apply(w)
 			return

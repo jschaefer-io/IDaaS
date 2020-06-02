@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/jinzhu/gorm"
+	"github.com/jschaefer-io/IDaaS/db"
 	"github.com/jschaefer-io/IDaaS/reponse"
 	"io"
 	"net/http"
@@ -31,6 +33,7 @@ func BindJson(form interface{}, reader io.Reader) error {
 
 	// validates the form struct
 	v := validator.New()
+	_ = v.RegisterValidation("dbunique", dbUnique)
 
 	return v.Struct(form)
 }
@@ -47,6 +50,21 @@ func ValidationError(err error) reponse.Response {
 		messages[strings.ToLower(fieldErr.Field())] = fieldError{fieldErr}.String()
 	}
 	return reponse.NewError(code, messages)
+}
+
+// Custom validation, checking
+// if the field does not exist yet
+// in the db
+func dbUnique(fl validator.FieldLevel) bool {
+	where := fmt.Sprintf("%s = ?", gorm.ToColumnName(fl.FieldName()))
+	value := fl.Field().String()
+	row := db.Get().Table(fl.Param()).Where(where, value).Select("id").Row()
+
+	var id int
+	err := row.Scan(&id)
+
+	// Return true if no row has been found
+	return id == 0 || err != nil
 }
 
 // Base wrapper for the
