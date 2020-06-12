@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-// Middleware to catch runtime panics
+// Middleware add the application/json content-type
 func ContentJson(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

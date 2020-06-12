@@ -12,8 +12,10 @@ import (
 type Identity struct {
 	Model
 	PasswordForm
-	Email string       `json:"email" validate:"required,email,dbunique=identities"`
-	Token crypto.Token `json:"-"`
+	Confirmed bool         `json:"confirmed" gorm:"default:false"`
+	Email     string       `json:"email" validate:"required,email,dbunique=identities"`
+	Name      string       `json:"name" validate:"required"`
+	Token     crypto.Token `json:"-"`
 }
 
 type IdentityLogin struct {
@@ -44,10 +46,11 @@ func (i Identity) CheckJwt(token string) (Identity, jwt.MapClaims, *jwt.Token, e
 }
 
 // Creates and prepares the new Identity Instance
-func NewIdentity(email string, password string) Identity {
+func NewIdentity(email string, password string, name string) Identity {
 	pwd := crypto.NewPassword(password)
 	return Identity{
 		Email: email,
+		Name:  name,
 		Token: crypto.NewToken(),
 		PasswordForm: PasswordForm{
 			Password: pwd.String(),

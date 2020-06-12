@@ -7,8 +7,24 @@ import (
 	"github.com/jschaefer-io/IDaaS/middleware"
 	"github.com/jschaefer-io/IDaaS/model"
 	"github.com/jschaefer-io/IDaaS/resource"
+	"io/ioutil"
+	"log"
 	"net/http"
 )
+
+func makeRequest(){
+	resp, err := http.Get("http://localhost:8080/identities/5")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Println(string(body))
+}
 
 func main() {
 
@@ -23,7 +39,7 @@ func main() {
 	r.Use(middleware.Logger)
 
 	// Add Resource Routes
-	resource.NewResource("/identities", new(action.Identity)).Apply(r)
+	resource.NewResource("/identities", new(action.Identity), new(model.Identity)).Apply(r)
 
 	// Plain Routes
 	r.HandleFunc("/auth/login", action.AuthLogin).Methods("POST")

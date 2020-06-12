@@ -28,7 +28,7 @@ func (b Identity) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := model.NewIdentity(json.Email, json.Password)
+	id := model.NewIdentity(json.Email, json.Password, json.Name)
 	_ = db.Get().Create(&id)
 
 	//fmt.Println(res.Error.Error())
@@ -36,23 +36,14 @@ func (b Identity) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // Main show single route
-func (b Identity) Show(w http.ResponseWriter, r *http.Request, id int) {
-	identity, err := model.Identity{}.Find(id)
-	if err != nil {
-		reponse.NewError(http.StatusUnprocessableEntity, err.Error()).Apply(w)
-		return
-	}
+func (b Identity) Show(w http.ResponseWriter, r *http.Request, id interface{}) {
+	identity := id.(*model.Identity)
 	reponse.NewResponse(http.StatusOK, identity).Apply(w)
 }
 
 // Main update route
-func (b Identity) Update(w http.ResponseWriter, r *http.Request, id int) {
-	identity, err := model.Identity{}.Find(id)
-	if err != nil {
-		reponse.NewError(http.StatusUnprocessableEntity, err.Error()).Apply(w)
-		return
-	}
-
+func (b Identity) Update(w http.ResponseWriter, r *http.Request, id interface{}) {
+	identity := id.(*model.Identity)
 	var json model.PasswordForm
 	if err := model.BindJson(&json, r.Body); err != nil {
 		model.ValidationError(err).Apply(w)
@@ -66,13 +57,8 @@ func (b Identity) Update(w http.ResponseWriter, r *http.Request, id int) {
 }
 
 // Main delete route
-func (b Identity) Delete(w http.ResponseWriter, r *http.Request, id int) {
-	identity, err := model.Identity{}.Find(id)
-	if err != nil {
-		reponse.NewError(http.StatusUnprocessableEntity, err.Error()).Apply(w)
-		return
-	}
-
+func (b Identity) Delete(w http.ResponseWriter, r *http.Request, id interface{}) {
+	identity := id.(*model.Identity)
 	db.Get().Delete(&identity)
 	reponse.NewResponse(http.StatusOK, identity).Apply(w)
 }

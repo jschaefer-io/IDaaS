@@ -55,4 +55,3 @@ func ExtractJWT(r *http.Request) (string, error) {
 	}
 	return split[1], nil
 }
-

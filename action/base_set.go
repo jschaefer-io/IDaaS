@@ -8,9 +8,9 @@ import (
 type Set interface {
 	Index(http.ResponseWriter, *http.Request)
 	Create(http.ResponseWriter, *http.Request)
-	Show(http.ResponseWriter, *http.Request, int)
-	Delete(http.ResponseWriter, *http.Request, int)
-	Update(http.ResponseWriter, *http.Request, int)
+	Show(http.ResponseWriter, *http.Request, interface{})
+	Delete(http.ResponseWriter, *http.Request, interface{})
+	Update(http.ResponseWriter, *http.Request, interface{})
 }
 
 // Base Action set which can be
@@ -33,18 +33,18 @@ func (b BaseActionSet) Create(w http.ResponseWriter, r *http.Request) {
 
 // Default show Route
 // results in a 404 error
-func (b BaseActionSet) Show(w http.ResponseWriter, r *http.Request, id int) {
+func (b BaseActionSet) Show(w http.ResponseWriter, r *http.Request, obj interface{}) {
 	Error404(w, r)
 }
 
 // Default delete Route
 // results in a 404 error
-func (b BaseActionSet) Delete(w http.ResponseWriter, r *http.Request, id int) {
+func (b BaseActionSet) Delete(w http.ResponseWriter, r *http.Request, obj interface{}) {
 	Error404(w, r)
 }
 
 // Default update Route
 // results in a 404 error
-func (b BaseActionSet) Update(w http.ResponseWriter, r *http.Request, id int) {
+func (b BaseActionSet) Update(w http.ResponseWriter, r *http.Request, obj interface{}) {
 	Error404(w, r)
 }

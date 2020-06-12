@@ -82,6 +82,12 @@ func AuthLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Return an error if the identity is currently unconfirmed
+	if !identity.Confirmed {
+		reponse.NewError(http.StatusConflict, "Identity unconfirmed").Apply(w)
+		return
+	}
+
 	// Issue and return a jwt
 	// with the user id in the free
 	// claim data
