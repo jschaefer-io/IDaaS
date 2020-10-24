@@ -1,58 +1,48 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/jschaefer-io/IDaaS/action"
-	"github.com/jschaefer-io/IDaaS/db"
-	"github.com/jschaefer-io/IDaaS/middleware"
-	"github.com/jschaefer-io/IDaaS/model"
-	"github.com/jschaefer-io/IDaaS/resource"
-	"io/ioutil"
-	"log"
+	"fmt"
+	"github.com/jschaefer-io/IDaaS/database"
+
+	"gorm.io/gorm"
 	"net/http"
+	"os"
 )
 
-func makeRequest(){
-	resp, err := http.Get("http://localhost:8080/identities/5")
-	if err != nil {
-		log.Fatalln(err)
-	}
+type User struct {
+	gorm.Model
+	name     string
+	password string
+}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	log.Println(string(body))
+func dbMigrate(db *gorm.DB) error {
+	return db.AutoMigrate(
+		User{},
+		User{},
+	)
 }
 
 func main() {
 
-	// Model Migrations
-	db.Get().AutoMigrate(model.Identity{})
+	// Establish db connection
+	db, err := database.GetConnection("mysql")
+	if err != nil {
+		panic(err)
+	}
 
-	r := mux.NewRouter()
+	// Auto-Migrate db
+	err = dbMigrate(db)
+	if err != nil {
+		panic(err)
+	}
 
-	// Middleware
-	r.Use(middleware.ContentJson)
-	r.Use(middleware.Recovery)
-	r.Use(middleware.Logger)
+	// Start application server
+	srv := NewServer(db)
+	port := os.Getenv("APP_PORT")
+	fmt.Printf("Starting Server on Port %s\n", port)
+	err = http.ListenAndServe(":"+port, &srv)
 
-	// Add Resource Routes
-	resource.NewResource("/identities", new(action.Identity), new(model.Identity)).Apply(r)
-
-	// Plain Routes
-	r.HandleFunc("/auth/login", action.AuthLogin).Methods("POST")
-	r.HandleFunc("/auth/renew", action.AuthRenew).Methods("POST")
-	r.Handle("/me", middleware.Auth(http.HandlerFunc(action.AuthMe))).Methods("GET")
-
-	// Error Routes
-	r.NotFoundHandler = middleware.ContentJson(http.HandlerFunc(action.Error404))
-	r.MethodNotAllowedHandler = middleware.ContentJson(http.HandlerFunc(action.Error405))
-
-	// Start Webservice
-	err := http.ListenAndServe(":8080", r)
-
+	// panic if the http service is unable to boot
 	if err != nil {
 		panic(err)
 	}
