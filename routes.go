@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"net/http"
 	"time"
 )
 
@@ -18,9 +16,7 @@ func (s *Server) init() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 
-	r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = fmt.Fprint(writer, "hello")
-	})
+	r.Get("/", s.AuthRequest())
 
 	s.router = r
 }
