@@ -20,6 +20,6 @@ func (s Server) AuthRequest() http.HandlerFunc {
 		if tplErr != nil {
 			http.Error(writer, tplErr.Error(), http.StatusInternalServerError)
 		}
-		tpl.Execute(writer, templateData{"World"})
+		tpl.Execute(writer, templateData{"Test"})
 	}
 }
