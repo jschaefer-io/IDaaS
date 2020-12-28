@@ -18,16 +18,25 @@ func (s *Server) init() {
 	r.Use(chiMiddleware.Timeout(30 * time.Second))
 
 	// API Routes
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.TypeJson())
+	r.Route("/api", func(r chi.Router) {
+		r.Use(middleware.ContentTypeJson)
 
-		r.Get("/users", s.UsersGetAll())
-		r.Post("/users", s.UsersCreate())
-		r.Get("/users/{userId}", s.UsersGetSingle())
-		r.Patch("/users/{userId}", s.UserUpdateSingle())
+		// jwt authentication endpoints
+		r.Post("/login", s.UserAuthenticate())
+		// @todo token refresh
+
+		// management endpoints
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Authenticated(s.db))
+
+			// user management
+			r.Get("/users", s.UsersGetAll())
+			r.Post("/users", s.UsersCreate())
+			r.Get("/users/{userId}", s.UsersGetSingle())
+			r.Patch("/users/{userId}", s.UserUpdateSingle())
+			r.Delete("/users/{userId}", s.UserDeleteSingle())
+		})
 	})
-
-	r.Get("/", s.AuthRequest())
 
 	s.router = r
 }
