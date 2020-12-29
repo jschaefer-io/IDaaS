@@ -6,7 +6,8 @@ import (
 	"github.com/fatih/structs"
 	"github.com/go-chi/chi"
 	"github.com/jschaefer-io/IDaaS/crypto"
-	"github.com/jschaefer-io/IDaaS/models"
+	"github.com/jschaefer-io/IDaaS/model"
+	"github.com/jschaefer-io/IDaaS/util"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"sync"
@@ -14,22 +15,22 @@ import (
 
 func (s *Server) UsersGetAll() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		users := make([]models.User, 0)
+		users := make([]model.User, 0)
 		s.db.Find(&users)
-		s.marshalToResponseWriter(users, writer, http.StatusOK)
+		util.MarshalToResponseWriter(users, writer, http.StatusOK)
 	}
 }
 
 func (s *Server) UsersGetSingle() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		id := chi.URLParam(request, "userId")
-		usr := models.User{}
+		usr := model.User{}
 		err := s.db.First(&usr, id)
 		if err.Error != nil {
-			s.marshalToResponseWriter(s.newErrorObject(fmt.Sprintf("user %v not found", id)), writer, http.StatusNotFound)
+			util.MarshalToResponseWriter(util.NewErrorObject(fmt.Sprintf("user %v not found", id)), writer, http.StatusNotFound)
 			return
 		}
-		s.marshalToResponseWriter(usr, writer, http.StatusOK)
+		util.MarshalToResponseWriter(usr, writer, http.StatusOK)
 	}
 }
 
@@ -41,30 +42,30 @@ func (s *Server) UsersCreate() http.HandlerFunc {
 	}
 	return func(writer http.ResponseWriter, request *http.Request) {
 		data := new(userCreateForm)
-		if err := models.BindJson(data, request.Body); err != nil {
-			s.marshalToResponseWriter(s.validationError(err), writer, http.StatusUnprocessableEntity)
+		if err := model.BindJson(data, request.Body); err != nil {
+			util.MarshalToResponseWriter(util.ValidationError(err), writer, http.StatusUnprocessableEntity)
 			return
 		}
 
 		// Check if the given email address is unique
-		uniqueCheck := make([]models.User, 0)
+		uniqueCheck := make([]model.User, 0)
 		s.db.Where("email = ?", data.Email).Find(&uniqueCheck)
 		if len(uniqueCheck) > 0 {
-			s.marshalToResponseWriter(s.newErrorObject(fmt.Sprintf("a user with this the email %s already exists", data.Email)), writer, http.StatusBadRequest)
+			util.MarshalToResponseWriter(util.NewErrorObject(fmt.Sprintf("a user with this the email %s already exists", data.Email)), writer, http.StatusBadRequest)
 			return
 		}
 
-		user := models.User{
+		user := model.User{
 			Name:  data.Name,
 			Email: data.Email,
 		}
 		user.SetPassword(data.Password)
 
 		if err := s.db.Create(&user); err.Error != nil {
-			s.marshalToResponseWriter(s.newErrorObject(err.Error.Error()), writer, http.StatusInternalServerError)
+			util.MarshalToResponseWriter(util.NewErrorObject(err.Error.Error()), writer, http.StatusInternalServerError)
 			return
 		}
-		s.marshalToResponseWriter(user, writer, http.StatusCreated)
+		util.MarshalToResponseWriter(user, writer, http.StatusCreated)
 	}
 }
 
@@ -77,15 +78,15 @@ func (s *Server) UserUpdateSingle() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		// Prepare input data
 		data := new(userUpdateForm)
-		if err := models.BindJson(data, request.Body); err != nil {
-			s.marshalToResponseWriter(s.validationError(err), writer, http.StatusUnprocessableEntity)
+		if err := model.BindJson(data, request.Body); err != nil {
+			util.MarshalToResponseWriter(util.ValidationError(err), writer, http.StatusUnprocessableEntity)
 			return
 		}
 		updateData := make(map[string]interface{})
 		for key, value := range structs.Map(data) {
 			if value != "" {
 				if key == "Password" {
-					usr := models.User{}
+					usr := model.User{}
 					usr.SetPassword(value.(string))
 					value = usr.Password
 				}
@@ -95,35 +96,35 @@ func (s *Server) UserUpdateSingle() http.HandlerFunc {
 
 		// Find User
 		id := chi.URLParam(request, "userId")
-		usr := models.User{}
+		usr := model.User{}
 		err := s.db.First(&usr, id)
 		if err.Error != nil {
-			s.marshalToResponseWriter(s.newErrorObject(fmt.Sprintf("user %v not found", id)), writer, http.StatusNotFound)
+			util.MarshalToResponseWriter(util.NewErrorObject(fmt.Sprintf("user %v not found", id)), writer, http.StatusNotFound)
 			return
 		}
 
 		// Update User
 		if err := s.db.Model(&usr).Updates(updateData); err.Error != nil {
-			s.marshalToResponseWriter(s.newErrorObject(err.Error.Error()), writer, http.StatusInternalServerError)
+			util.MarshalToResponseWriter(util.NewErrorObject(err.Error.Error()), writer, http.StatusInternalServerError)
 			return
 		}
-		s.marshalToResponseWriter(usr, writer, http.StatusOK)
+		util.MarshalToResponseWriter(usr, writer, http.StatusOK)
 	}
 }
 
 func (s *Server) UserDeleteSingle() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		id := chi.URLParam(request, "userId")
-		del := s.db.Delete(models.User{}, id)
+		del := s.db.Delete(model.User{}, id)
 		if del.Error != nil {
-			s.marshalToResponseWriter(s.newErrorObject(del.Error.Error()), writer, http.StatusInternalServerError)
+			util.MarshalToResponseWriter(util.NewErrorObject(del.Error.Error()), writer, http.StatusInternalServerError)
 			return
 		}
 		if del.RowsAffected == 0 {
-			s.marshalToResponseWriter(s.newErrorObject(fmt.Sprintf("user %v not found", id)), writer, http.StatusNotFound)
+			util.MarshalToResponseWriter(util.NewErrorObject(fmt.Sprintf("user %v not found", id)), writer, http.StatusNotFound)
 			return
 		}
-		s.marshalToResponseWriter(nil, writer, http.StatusNoContent)
+		util.MarshalToResponseWriter(nil, writer, http.StatusNoContent)
 	}
 }
 
@@ -140,33 +141,33 @@ func (s *Server) UserAuthenticate() http.HandlerFunc {
 			rsaSecret, rsaError = crypto.ReadPrivateRsaKey()
 		})
 		if rsaError != nil {
-			s.marshalToResponseWriter(s.newErrorObject("an unknown error occurred"), writer, http.StatusInternalServerError)
+			util.MarshalToResponseWriter(util.NewErrorObject("an unknown error occurred"), writer, http.StatusInternalServerError)
 			panic(rsaError)
 		}
 
 		// check user credentials
 		data := new(userLoginForm)
-		usr := models.User{}
-		if err := models.BindJson(data, request.Body); err != nil {
-			s.marshalToResponseWriter(s.newErrorObject(err.Error()), writer, http.StatusInternalServerError)
+		usr := model.User{}
+		if err := model.BindJson(data, request.Body); err != nil {
+			util.MarshalToResponseWriter(util.NewErrorObject(err.Error()), writer, http.StatusInternalServerError)
 			return
 		}
 		if err := s.db.Where("email = ?", data.Email).First(&usr); err.Error != nil {
-			s.marshalToResponseWriter(s.newErrorObject(err.Error.Error()), writer, http.StatusBadRequest)
+			util.MarshalToResponseWriter(util.NewErrorObject(err.Error.Error()), writer, http.StatusBadRequest)
 			return
 		}
 		if err := bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(data.Password)); err != nil {
-			fmt.Println(err)
-			s.marshalToResponseWriter(s.newErrorObject("permission denied"), writer, http.StatusUnauthorized)
+			util.MarshalToResponseWriter(util.NewErrorObject("permission denied"), writer, http.StatusUnauthorized)
 			return
 		}
 
-		tokenString, err := crypto.NewJwt(rsaSecret, usr)
+		tokenString, err := crypto.NewJwt(rsaSecret, usr.ID)
 		if err != nil {
-			s.marshalToResponseWriter(s.newErrorObject("an unknown error occurred"), writer, http.StatusInternalServerError)
+			util.MarshalToResponseWriter(util.NewErrorObject("an unknown error occurred"), writer, http.StatusInternalServerError)
 			return
 		}
-		s.marshalToResponseWriter(map[string]interface{}{
+
+		util.MarshalToResponseWriter(map[string]interface{}{
 			"token": tokenString,
 		}, writer, http.StatusOK)
 	}

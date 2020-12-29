@@ -4,17 +4,15 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/jschaefer-io/IDaaS/models"
 	"strconv"
 	"time"
 )
 
-func NewJwt(secret *rsa.PrivateKey, user models.User) (string, error) {
+func NewJwt(secret *rsa.PrivateKey, id uint) (string, error) {
 	claims := jwt.MapClaims{
 		"exp":  time.Now().Add(time.Minute * 5).Unix(),
-		"user": user.ID,
+		"user": id,
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
 	return token.SignedString(secret)
 }

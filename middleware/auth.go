@@ -5,14 +5,14 @@ import (
 	"crypto/rsa"
 	"errors"
 	"github.com/jschaefer-io/IDaaS/crypto"
-	"github.com/jschaefer-io/IDaaS/models"
+	"github.com/jschaefer-io/IDaaS/model"
 	"gorm.io/gorm"
 	"net/http"
 	"strings"
 	"sync"
 )
 
-func Authenticated(db *gorm.DB) func(next http.Handler) http.Handler {
+func TokenAuthenticated(db *gorm.DB) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		var init sync.Once
 		var rsaSecret *rsa.PublicKey
@@ -33,7 +33,7 @@ func Authenticated(db *gorm.DB) func(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusForbidden)
 				return
 			}
-			usr := new(models.User)
+			usr := new(model.User)
 			res := db.Find(usr, id)
 			if res.Error != nil {
 				w.WriteHeader(http.StatusUnauthorized)

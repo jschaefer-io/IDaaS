@@ -27,7 +27,7 @@ func (s *Server) init() {
 
 		// management endpoints
 		r.Group(func(r chi.Router) {
-			r.Use(middleware.Authenticated(s.db))
+			r.Use(middleware.TokenAuthenticated(s.db))
 
 			// user management
 			r.Get("/users", s.UsersGetAll())

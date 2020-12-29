@@ -2,25 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/jschaefer-io/IDaaS/models"
+	"github.com/jschaefer-io/IDaaS/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"net/http"
 	"os"
 )
-
-//type User struct {
-//	gorm.Model
-//	name     string
-//	password string
-//}
-//
-//func dbMigrate(db *gorm.DB) error {
-//	return db.AutoMigrate(
-//		User{},
-//		User{},
-//	)
-//}
 
 func prepareOrm() (*gorm.DB, error) {
 	user := os.Getenv("DB_USER")
@@ -38,13 +25,21 @@ func main() {
 		panic(err)
 	}
 
-	err = orm.AutoMigrate(&models.User{})
+	err = orm.AutoMigrate(
+		&model.User{},
+		&model.Session{},
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	// Start application server
+	// create application server
 	srv := NewServer(orm)
+
+	// start application cleanup processes
+	go srv.Heartbeat()
+
+	// start application server
 	port := os.Getenv("APP_PORT")
 	fmt.Printf("Starting Server on Port %s\n", port)
 	err = http.ListenAndServe(":"+port, &srv)
