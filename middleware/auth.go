@@ -3,12 +3,11 @@ package middleware
 import (
 	"context"
 	"crypto/rsa"
-	"errors"
 	"github.com/jschaefer-io/IDaaS/crypto"
 	"github.com/jschaefer-io/IDaaS/model"
+	"github.com/jschaefer-io/IDaaS/util"
 	"gorm.io/gorm"
 	"net/http"
-	"strings"
 	"sync"
 )
 
@@ -27,10 +26,10 @@ func TokenAuthenticated(db *gorm.DB) func(next http.Handler) http.Handler {
 				panic(rsaError)
 			}
 
-			tokenString, _ := extractJWT(r)
+			tokenString, _ := util.ExtractJWT(r)
 			id, err := crypto.ParseJwt(tokenString, rsaSecret)
 			if err != nil {
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 			usr := new(model.User)
@@ -45,13 +44,19 @@ func TokenAuthenticated(db *gorm.DB) func(next http.Handler) http.Handler {
 	}
 }
 
-func extractJWT(r *http.Request) (string, error) {
-	token := r.Header.Get("Authorization")
-	split := strings.Split(token, " ")
+func SessionAuthenticated(db *gorm.DB) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	// Check if token is present and properly formed
-	if len(split) != 2 || split[0] != "Bearer" {
-		return "", errors.New("invalid bearer token")
+			session, err := util.ExtractSession(r, db)
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				// @todo redirect to login page
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), "user", session.User)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
-	return split[1], nil
 }

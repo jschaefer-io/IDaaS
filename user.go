@@ -161,7 +161,7 @@ func (s *Server) UserAuthenticate() http.HandlerFunc {
 			return
 		}
 
-		tokenString, err := crypto.NewJwt(rsaSecret, usr.ID)
+		tokenString, err := crypto.NewJwt(rsaSecret, "user", usr.ID)
 		if err != nil {
 			util.MarshalToResponseWriter(util.NewErrorObject("an unknown error occurred"), writer, http.StatusInternalServerError)
 			return

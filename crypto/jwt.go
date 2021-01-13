@@ -8,11 +8,11 @@ import (
 	"time"
 )
 
-func NewJwt(secret *rsa.PrivateKey, id uint) (string, error) {
+func NewJwt(secret *rsa.PrivateKey, key string, value uint) (string, error) {
 	claims := jwt.MapClaims{
-		"exp":  time.Now().Add(time.Minute * 5).Unix(),
-		"user": id,
+		"exp": time.Now().Add(time.Minute * 5).Unix(),
 	}
+	claims[key] = value
 	token := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
 	return token.SignedString(secret)
 }
