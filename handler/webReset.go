@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/jschaefer-io/IDaaS/repository"
 	"github.com/jschaefer-io/IDaaS/utils"
 	"gopkg.in/gomail.v2"
