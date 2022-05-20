@@ -1,0 +1,36 @@
+{{template "header"}}
+<div class="form-box">
+    <img class="logo" src="https://dummyimage.com/640x360">
+    <div class="box">
+        <form action="/login" method="post">
+            {{if index .Errors "system"}}
+                <p class="help is-danger">{{index .Errors "system"}}</p>
+            {{end}}
+            <div class="field">
+                <label class="label">Email</label>
+                <div class="control">
+                    <input class="input {{if index .Errors "mail"}}is-danger{{end}}" type="text" name="email"
+                           value="{{.Mail}}">
+                </div>
+                {{if index .Errors "mail"}}
+                    <p class="help is-danger">{{index .Errors "mail"}}</p>
+                {{end}}
+            </div>
+            <div class="field">
+                <label class="label">Password</label>
+                <div class="control">
+                    <input class="input {{if index .Errors "pw"}}is-danger{{end}}" type="password" name="password">
+                </div>
+                {{if index .Errors "pw"}}
+                    <p class="help is-danger">{{index .Errors "pw"}}</p>
+                {{end}}
+            </div>
+            <input type="hidden" name="redirect" value="{{.Redirect}}">
+            <button class="button is-primary">Login</button>
+        </form>
+        <p>
+            <small><a href="{{.ResetUrl}}">Passwort vergessen</a></small>
+        </p>
+    </div>
+</div>
+{{template "footer"}}

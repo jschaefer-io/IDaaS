@@ -1,50 +1,63 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
-	"github.com/jschaefer-io/IDaaS/model"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"log"
+	"net"
 	"net/http"
 	"os"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jschaefer-io/IDaaS/repository"
+	"github.com/jschaefer-io/IDaaS/server"
+	_ "github.com/lib/pq"
 )
 
-func prepareOrm() (*gorm.DB, error) {
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASS")
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	name := os.Getenv("DB_NAME")
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, name)
-	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
-}
-
 func main() {
-	orm, err := prepareOrm()
+	logger := log.Default()
+
+	// Settings
+	settings, err := server.SettingsFromEnv()
 	if err != nil {
 		panic(err)
 	}
 
-	err = orm.AutoMigrate(
-		&model.User{},
-		&model.Session{},
-	)
+	// Establish DB connection
+	db, err := sql.Open("postgres", fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		os.Getenv("JIO_DB_USER"),
+		os.Getenv("JIO_DB_PASSWORD"),
+		os.Getenv("JIO_DB_HOST"),
+		os.Getenv("JIO_DB_PORT"),
+		os.Getenv("JIO_DB_NAME"),
+	))
 	if err != nil {
 		panic(err)
 	}
 
-	// create application server
-	srv := NewServer(orm)
+	// create repositories
+	repos := &server.Repositories{
+		UserRepository:         repository.NewUserRepository(db),
+		RefreshChainRepository: repository.NewRefreshTokenRepository(db),
+	}
 
-	// start application cleanup processes
-	go srv.Heartbeat()
+	// create main server instance
+	srv := server.NewServer(server.Args{
+		Logger:       logger,
+		Router:       chi.NewRouter(),
+		Settings:     settings,
+		Repositories: repos,
+	}, ServerRoutes)
 
 	// start application server
-	port := os.Getenv("APP_PORT")
-	fmt.Printf("Starting Server on Port %s\n", port)
-	err = http.ListenAndServe(":"+port, &srv)
-
-	// panic if the http service is unable to boot
+	host := "0.0.0.0:8080"
+	listener, err := net.Listen("tcp", host)
+	if err != nil {
+		panic(err)
+	}
+	logger.Printf("server ready to accept connections on %s", host)
+	err = http.Serve(listener, srv)
 	if err != nil {
 		panic(err)
 	}

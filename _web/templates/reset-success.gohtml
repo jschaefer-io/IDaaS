@@ -1,0 +1,18 @@
+{{template "header"}}
+<div class="form-box">
+    <img class="logo" src="https://dummyimage.com/640x360">
+        {{if eq .Step "start"}}
+            <div class="notification is-success">
+                <strong>We've sent you an email with a link to reset your password.</strong><br />
+                Click the link in the email to create a new password.
+                If you do not receive an email within 5 minutes, please try again.
+            </div>
+        {{else if eq .Step "reset"}}
+            <div class="notification is-success">
+                <strong>Your password was updated successfully</strong><br />
+                Click the link below to login again.
+            </div>
+            <a class="button is-primary" href="{{index .Data "loginUrl"}}">Login</a>
+        {{end}}
+</div>
+{{template "footer"}}

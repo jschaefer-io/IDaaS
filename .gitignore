@@ -1,5 +1,3 @@
 .idea
-db
-test.db
-notes.txt
-docker-compose.yml
+mnt
+NOTES.md
